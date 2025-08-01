@@ -1,0 +1,65 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: spike
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/spike?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: 1234
+  redis:
+    host: 127.0.0.1
+#    host: 192.168.3.236
+    port: 6379
+#    port: 6888
+    password: ${TRADE_MQ_PASSWORD}
+    lettuce:
+      pool:
+        max-active: 10
+        max-idle: 10
+        min-idle: 1
+        time-between-eviction-runs: 10s
+  jackson:
+    default-property-inclusion: non_null # JSON处理时忽略非空字段
+
+  rabbitmq:
+    host: 192.168.3.236
+    username: qqq
+    password: ${TRADE_MQ_PASSWORD}
+    virtual-host: /
+    port: 5672
+    listener:
+      simple:
+        concurrency: 10
+        max-concurrency: 10
+        prefetch: 1
+        auto-startup: true
+        default-requeue-rejected: true
+    template:
+      retry:
+        enabled: true
+        initial-interval: 1000ms
+        max-attempts: 3
+        max-interval: 10000ms
+        multiplier: 1
+mybatis-plus:
+  type-aliases-package: com.spiketrade.entity # 别名扫描包
+logging:
+  level:
+    com.spiketrade: debug
+
+spike:
+  jwt:
+    # 设置jwt签名加密时使用的秘钥
+    admin-secret-key: ${TRADE_JWT_SECRET}
+    # 设置jwt过期时间
+    admin-ttl: 21600000
+    # 设置前端传递过来的令牌名称
+    admin-token-name: authentication
+    # 设置jwt签名加密时使用的秘钥
+    user-secret-key: ${TRADE_JWT_SECRET}
+    # 设置jwt过期时间
+    user-ttl: 21600000
+    # 设置前端传递过来的令牌名称
+    user-token-name: authentication
