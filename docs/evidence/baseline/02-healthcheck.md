@@ -24,6 +24,6 @@ HTTP/1.1 200
 
 ## 尚未证明（不要写成已完成）
 
-- 登录链路（`/user/code` → `/user/login` 拿 token）
-- 秒杀链路（`/voucher-order/seckill/{id}` → RabbitMQ → `MQReceiver` → `tb_voucher_order`）
-- 缓存 miss/hit 路径
+- ~~登录链路~~ → 已由 `04-login.md` 覆盖（2026-10-20 18:19）
+- ~~秒杀链路（含 MQ 消费落库）~~ → 已由 `05-seckill.md` 覆盖（2026-10-20 18:19）
+- 缓存 miss/hit 路径 —— **仍未验证**

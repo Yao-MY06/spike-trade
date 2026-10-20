@@ -39,6 +39,7 @@
 | 2026-10-20 | `ef69323` | 基线登记 | clone 基线、登记 2.1 节四项、完成 3.1.1 代码质量核查并落 7 条已知问题 | 本 README；`docs/evidence/baseline/` |
 | 2026-10-20 | `env: 环境对齐` | 环境对齐 | `mysql-connector-java 5.1.47 → 8.0.33`、driver 改 `com.mysql.cj.jdbc.Driver`、库改独立 `spike_trade`、三处凭据改本机值、`RedissonConfig` 硬编码密码修正 | `docs/runbook.md` 第 3 步；启动日志 `docs/evidence/baseline/01-startup.log` |
 | 2026-10-20 | `docs: runbook` | 文档 | 五步重建流程 + 四个已踩坑 + 启动判定标准；新增健康检查证据 | `docs/runbook.md`；`docs/evidence/baseline/02-healthcheck.md` |
+| 2026-10-20 | `evidence: 登录 + 秒杀` | 基线证据 | 登录链路（JWT 155 字符、自动注册 id=1011）+ 秒杀链路（orderId `650795538001690630`、MQ 发送→消费 147ms、Redis/DB 库存 99、重复下单被拒） | `docs/evidence/baseline/04-login.md`、`05-seckill.md` |
 
 ## 待办前置（按顺序，未完成不进入改造）
 
@@ -46,8 +47,9 @@
 - [x] 释放 8081（已确认原占用者是阶段四工程 `java -jar target/spike-trade-...jar`，已停并核对过）
 - [x] MySQL 建 `spike_trade` 并导入 `db/schema.sql`；解决 `mysql-connector 5.1.47` 与 MySQL 9.5 的认证兼容
 - [x] 应用启动成功 + 健康检查通过（2026-10-20 17:23，`Started in 15.7s`、`/shop-type/list` HTTP 200）
-- [ ] 登录拿 token → 秒杀一次 → 确认 `MQReceiver` 落库（`docs/evidence/baseline/` 留响应与日志）
-- [ ] 手工预热 `seckill:stock:{voucherId}` / `seckill:order:{voucherId}`，记录所用命令
+- [x] 发券 + 预热 + 登录拿 token（18:18，`POST /user/code` → `POST /user/login` → JWT 155 字符；用户 `id=1011` 自动注册）——见 `04-login.md`
+- [x] 秒杀一次并确认 `MQReceiver` 落库（18:19，orderId `650795538001690630`，Redis 100→99，DB stock 99，订单 1 条，三方订单号一致；重复下单被拒且库存不变）——见 `05-seckill.md`
+- [ ] 缓存 miss/hit 路径（唯一未验证的基线能力）
 
 ---
 
