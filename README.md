@@ -29,6 +29,8 @@
 | 8 | **凭据散落两处**：`RedissonConfig` 硬编码 `setPassword("${TRADE_MQ_PASSWORD}")`，与 `application.yaml` 的 redis 密码各写各的 | `com.spiketrade.config.RedissonConfig` | 只改 yaml 会在启动时抛 `WRONGPASS`，排查成本高 | 已改为本机密码；后续建议改成读取 `spring.redis.*` 配置（属改造，暂不做） |
 | 9 | **签发与校验用了不同的 JWT 密钥**：`UserServiceImpl.login()` 用 `getUserSecretKey()` 签发，`RefreshTokenInterceptor` 用 `getAdminSecretKey()` 校验；当前 yaml 里两个 key 字面值相同所以能跑 | `UserServiceImpl` / `utils/RefreshTokenInterceptor` | 一旦把 user/admin 密钥按语义拆成不同值，**全部请求立刻 401**；这是隐藏的配置耦合 | 基线阶段**不改**（改了就偏离基线）；写进已知问题，改造时一并处理 |
 | 10 | **登录态已脱离 Redis**：`RefreshTokenInterceptor` 里基于 `login:token:*` 取用户的整段被注释，改为纯 JWT 无状态；`UserServiceImpl` 也不再写 Redis 用户 Hash | 同上 | 与课程原版「Redis 存登录态 + 续期」不同，**基线能力口径要按本 fork 记**，不能照抄原版说法 | 仅记录，不改 |
+| 11 | **商铺缓存未命中不查库**：`queryWithLogicalExpire()` 第一步 `isBlank(json)` 就 `return null`，没有查库兜底、没有空值缓存，且**全项目没有缓存预热入口** | `utils/CacheClient` + `ShopServiceImpl.queryBiId()` | 冷启动 / Redis 被清后，**所有商户详情返回「店铺不存在」**；这也是「缓存穿透」在基线里完全没设防的证据 | 改造点（方向二缓存体系）；基线阶段仅记录 |
+| 12 | **「二级缓存」名不副实**：`CaffeineConfig` 只注册了 `Cache` Bean，Shop 路径（`CacheClient`）**完全没引用**；真正用 Caffeine 的只有 `VoucherServiceImpl` 查优惠券详情 | `config/CaffeineConfig` / `utils/CacheClient` | README 自述「Caffeine + Redis 二级缓存」只对优惠券成立；商铺详情只有 Redis 一层 | 仅记录，改口径 |
 
 ## 改造日志
 
@@ -40,6 +42,7 @@
 | 2026-10-20 | `env: 环境对齐` | 环境对齐 | `mysql-connector-java 5.1.47 → 8.0.33`、driver 改 `com.mysql.cj.jdbc.Driver`、库改独立 `spike_trade`、三处凭据改本机值、`RedissonConfig` 硬编码密码修正 | `docs/runbook.md` 第 3 步；启动日志 `docs/evidence/baseline/01-startup.log` |
 | 2026-10-20 | `docs: runbook` | 文档 | 五步重建流程 + 四个已踩坑 + 启动判定标准；新增健康检查证据 | `docs/runbook.md`；`docs/evidence/baseline/02-healthcheck.md` |
 | 2026-10-20 | `evidence: 登录 + 秒杀` | 基线证据 | 登录链路（JWT 155 字符、自动注册 id=1011）+ 秒杀链路（orderId `650795538001690630`、MQ 发送→消费 147ms、Redis/DB 库存 99、重复下单被拒） | `docs/evidence/baseline/04-login.md`、`05-seckill.md` |
+| 2026-10-20 | `evidence: 缓存三路径` | 基线证据 | 未命中/命中/过期重建三条路径 + 发现 #11 未命中不查库、#12 二级缓存名不副实、Redis 与阶段四共用实例 | `docs/evidence/baseline/06-cache.md` |
 
 ## 待办前置（按顺序，未完成不进入改造）
 
@@ -49,7 +52,9 @@
 - [x] 应用启动成功 + 健康检查通过（2026-10-20 17:23，`Started in 15.7s`、`/shop-type/list` HTTP 200）
 - [x] 发券 + 预热 + 登录拿 token（18:18，`POST /user/code` → `POST /user/login` → JWT 155 字符；用户 `id=1011` 自动注册）——见 `04-login.md`
 - [x] 秒杀一次并确认 `MQReceiver` 落库（18:19，orderId `650795538001690630`，Redis 100→99，DB stock 99，订单 1 条，三方订单号一致；重复下单被拒且库存不变）——见 `05-seckill.md`
-- [ ] 缓存 miss/hit 路径（唯一未验证的基线能力）
+- [x] 商户缓存未命中 / 命中 / 过期重建三条路径（18:26）——见 `06-cache.md`；**顺带发现 #11 未命中不查库、#12 二级缓存名不副实**
+- [ ] 并发验证（JMeter 压测超卖与重复单）——**基线阶段不做，留给方向二**
+- [ ] Feed / GEO / 签到 / Redis Stream 在本 fork 的实际形态核对（Stream 已被 MQ 替代）
 
 ---
 
