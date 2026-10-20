@@ -62,7 +62,6 @@ mvn -B -DskipTests package          # 首次约 3 分钟（拉依赖），增量
 ```
 
 ## 第 5 步：判定启动成功
-
 看日志四行齐全：
 
 ```
@@ -77,6 +76,24 @@ HikariPool-1 - Start completed.
 ```bash
 curl -s http://localhost:8081/shop-type/list | head -c 120
 # 期望：{"success":true,"data":[{"id":1,"name":"美食",...
+```
+
+## 第 6 步：造券与预热（跑秒杀前必做）
+
+**基线 SQL 里没有秒杀券**（`tb_seckill_voucher` 0 行），必须先造一张，否则秒杀无从验证。
+
+```sql
+-- id=100 仅作基线验证用
+insert into tb_voucher(id,shop_id,title,sub_title,rules,pay_value,actual_value,type,status,create_time,update_time)
+values (100,1,'测试秒杀券','基线验证专用','仅用于基线链路验证',1,10,1,1,now(),now());
+insert into tb_seckill_voucher(voucher_id,stock,create_time,begin_time,end_time,update_time)
+values (100,100,now(),date_sub(now(),interval 1 hour),date_add(now(),interval 1 day),now());
+```
+
+```bash
+# 预热 Redis 库存（必须建，否则 Lua 里 tonumber(nil/false) 直接报错）
+docker exec redis redis-cli -a ${TRADE_REDIS_PASSWORD} set seckill:stock:100 100
+# seckill:order:100 不必预建，sismember 对不存在的 key 返回 0
 ```
 
 ## 四个已踩过的坑（照抄错误信息可搜索本文）
