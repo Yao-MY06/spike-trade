@@ -12,7 +12,7 @@
 | 源代码 | 上游：`https://github.com/Madgeaaaaa/spike`；分支 `master`；commit `0bfd67148578229bc25b98fa592a2cc6b142e0f7`（2025-08-01T15:04:23Z，最后一次提交为 `Update README.md`）；本地路径 `F:\study\spike-base` |
 | fork 来源 | 非 GitHub 显式 fork（`fork: false`，独立上传的改造版，0 star，9 个 commit 且全为 README 修改，历史已被压平）；业务与代码源自交易平台课程原仓 `cs001020/spike`，本次未逐文件比对，**同源关系记为“推定，未核实”** |
 | 运行环境 | Windows（win32）；JDK 11.0.32.1 Temurin（`F:\path`，项目 `java.version=1.8`）；Maven 3.9.16（`E:\work\apache-maven-3.9.16`，默认跑在 JDK 25，构建前须 `export JAVA_HOME="F:\path"`）；MySQL 9.5（本机 3306，密码 `${TRADE_DB_PASSWORD}`）；Redis 6.2 容器 `redis`（Docker 29.4.3，6379，密码 `${TRADE_REDIS_PASSWORD}`）；RabbitMQ **未就绪**（本机无 5672 监听，需 Docker 起）；前端 nginx 1.18.0（`F:\study\spike-nginx`，80 端口当前未监听） |
-| 启动方式 | 配置来源 `src/main/resources/application.yaml`（`server.port=8081`）；启动 `mvn spring-boot:run` 或运行 `SpikeTradeApplication`；**必改 3 处**：`spring.rabbitmq.host` 由 `192.168.3.236` 改本机、`spring.redis.password` 由 `${TRADE_MQ_PASSWORD}` 改 `${TRADE_REDIS_PASSWORD}`、`spring.datasource.password` 由 `1234` 改 `${TRADE_DB_PASSWORD}`；初始化：MySQL 导入 `src/main/resources/db/schema.sql`（建 `spike` 库），**Redis 无自动预热**，`seckill:stock:{voucherId}` 与 `seckill:order:{voucherId}` 须手工写入；健康检查：`GET /shop-type/list` 返回 `code:1` 即应用与 DB 通 |
+| 启动方式 | 配置来源 `src/main/resources/application.yaml`（`server.port=8081`）；启动 `F:/path/bin/java.exe -jar target/spike-trade-0.0.1-SNAPSHOT.jar --server.port=8081`（**必须显式带端口**，托管启动会被注入随机端口）；**必改 4 处凭据**：`spring.rabbitmq.host` 由 `192.168.3.236` 改 `127.0.0.1`、`spring.redis.password` 由 `${TRADE_MQ_PASSWORD}` 改 `${TRADE_REDIS_PASSWORD}`、`spring.datasource.password` 由 `1234` 改 `${TRADE_DB_PASSWORD}`、**`RedissonConfig.java` 里硬编码的 `setPassword("${TRADE_MQ_PASSWORD}")` 也必须改**（改 yaml 不生效）；初始化：MySQL 导入 `src/main/resources/db/schema.sql` 到独立库 `spike_trade`（**不复用阶段四的 `spike` 库**），导入须带 `--init-command="SET SESSION sql_mode='NO_ENGINE_SUBSTITUTION'"`；**Redis 无自动预热**，`seckill:stock:{voucherId}` 与 `seckill:order:{voucherId}` 须手工写入；健康检查：`GET /shop-type/list` 返回 `success:true` + 10 条数据即应用与 DB 通。完整重建步骤见 `docs/runbook.md` |
 | 课程差异 | 相对课程原版：① 消息中间件由 **Redis Stream 换成 RabbitMQ**（`RabbitMQTopicConfig` + `MQSender` + `MQReceiver`，`seckill.lua` 里 `xadd` 分支整段注释）；② 新增 `CaffeineConfig`（本地缓存，部分读路径）；③ 新增限流模块 `com.spiketrade.limiter`（注解 `@RateLimiter` + AOP + `limiter.lua`，支持全局/用户/IP 三维度）；④ 新增 `RedissonConfig` 与 `RedissonTest`（Redisson 3.13.6 已引入）；⑤ 登录改 JWT 无状态（`JwtProperties`，未实现令牌续期）；⑥ **订单模块为 TODO**（README 第 5 条自述，`Spring Task` 定时关单未实现）。未复核处一律未写成“已完成” |
 
 ## 已知问题（基线自带，改造依据）
@@ -25,7 +25,8 @@
 | 4 | **判空顺序错**：先 `UserHolder.getUser().getId()` 再判 `userId == null` | `VoucherOrderServiceImpl.seckillVoucher()` | 未登录请求先 NPE，判空无效 | 首笔 bugfix commit |
 | 5 | **限流单机化**：Guava `RateLimiter` 为单机令牌桶且已被注释；真正限流走 `@RateLimiter` + Redis Lua | `VoucherOrderServiceImpl` / `limiter` 包 | 集群下 Guava 路径失效（当前未启用） | 方向一（拆分后重定限流边界） |
 | 6 | **包名拼写错误** `rebbitmq` | `com.spiketrade.rebbitmq` | 无功能影响 | 保留不改，避免污染改造 diff |
-| 7 | **依赖组合风险**：`spring-boot 2.3.12.RELEASE` + 手动覆盖 `spring-data-redis 2.7.2` + `lettuce 6.1.9`；`mysql-connector-java 5.1.47` 不支持 `caching_sha2_password`（MySQL 9.5 已移除 `mysql_native_password`） | `pom.xml` / `application.yaml` | 可能启动即报错或连不上库 | 版本对齐（若触发，记为第一笔 commit） |
+| 7 | **依赖组合风险**：`spring-boot 2.3.12.RELEASE` + 手动覆盖 `spring-data-redis 2.7.2` + `lettuce 6.1.9`；`mysql-connector-java 5.1.47` 不支持 `caching_sha2_password`（MySQL 9.5 已移除 `mysql_native_password`） | `pom.xml` / `application.yaml` | 可能启动即报错或连不上库 | **已处理**：驱动升 `8.0.33` + `com.mysql.cj.jdbc.Driver`（commit 见日志）；`spring-data-redis 2.7.2` 与 boot 2.3.12 组合**能编能跑但属脆弱点，暂不动** |
+| 8 | **凭据散落两处**：`RedissonConfig` 硬编码 `setPassword("${TRADE_MQ_PASSWORD}")`，与 `application.yaml` 的 redis 密码各写各的 | `com.spiketrade.config.RedissonConfig` | 只改 yaml 会在启动时抛 `WRONGPASS`，排查成本高 | 已改为本机密码；后续建议改成读取 `spring.redis.*` 配置（属改造，暂不做） |
 
 ## 改造日志
 
@@ -33,14 +34,17 @@
 
 | 日期 | commit | 类型 | 内容 | 证据 |
 | --- | --- | --- | --- | --- |
-| 2026-10-20 | （本文件，未提交） | 基线登记 | clone 基线、登记 2.1 节四项、完成 3.1.1 代码质量核查并落 7 条已知问题 | 本 README；`docs/evidence/baseline/` |
+| 2026-10-20 | `ef69323` | 基线登记 | clone 基线、登记 2.1 节四项、完成 3.1.1 代码质量核查并落 7 条已知问题 | 本 README；`docs/evidence/baseline/` |
+| 2026-10-20 | `env: 环境对齐` | 环境对齐 | `mysql-connector-java 5.1.47 → 8.0.33`、driver 改 `com.mysql.cj.jdbc.Driver`、库改独立 `spike_trade`、三处凭据改本机值、`RedissonConfig` 硬编码密码修正 | `docs/runbook.md` 第 3 步；启动日志 `docs/evidence/baseline/01-startup.log` |
+| 2026-10-20 | `docs: runbook` | 文档 | 五步重建流程 + 四个已踩坑 + 启动判定标准；新增健康检查证据 | `docs/runbook.md`；`docs/evidence/baseline/02-healthcheck.md` |
 
 ## 待办前置（按顺序，未完成不进入改造）
 
-- [ ] 起 RabbitMQ（Docker，5672 + 15672），改 `application.yaml` 三处凭据
-- [ ] 释放 8081：当前被一个 `java.exe`（PID 32992）占用，疑为上一阶段实跑残留，起 fork 前须确认并停掉
-- [ ] MySQL 建 `spike` 库并导入 `db/schema.sql`；解决 `mysql-connector 5.1.47` 与 MySQL 9.5 的认证兼容
-- [ ] 应用启动成功 → 登录拿 token → 秒杀一次并看到 MQ 消费落库（`docs/evidence/baseline/` 留响应与日志）
+- [x] 起 RabbitMQ（Docker，5672 + 15672），改 `application.yaml` 三处凭据
+- [x] 释放 8081（已确认原占用者是阶段四工程 `java -jar target/spike-trade-...jar`，已停并核对过）
+- [x] MySQL 建 `spike_trade` 并导入 `db/schema.sql`；解决 `mysql-connector 5.1.47` 与 MySQL 9.5 的认证兼容
+- [x] 应用启动成功 + 健康检查通过（2026-10-20 17:23，`Started in 15.7s`、`/shop-type/list` HTTP 200）
+- [ ] 登录拿 token → 秒杀一次 → 确认 `MQReceiver` 落库（`docs/evidence/baseline/` 留响应与日志）
 - [ ] 手工预热 `seckill:stock:{voucherId}` / `seckill:order:{voucherId}`，记录所用命令
 
 ---

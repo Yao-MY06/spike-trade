@@ -1,0 +1,39 @@
+# 基线启动日志（成功）
+# 采集方式：托管任务输出导出（java -jar target/spike-trade-0.0.1-SNAPSHOT.jar --server.port=8081）
+# 采集时间：2026-10-20 17:23，环境见项目 README 基线登记
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::       (v2.3.12.RELEASE)
+
+2026-10-20 17:23:21.354  INFO 47084 --- [           main] com.spiketrade.SpikeTradeApplication           : Starting SpikeTradeApplication v0.0.1-SNAPSHOT on DESKTOP-FVROP1T with PID 47084 (F:\study\spike-base\target\spike-trade-0.0.1-SNAPSHOT.jar started by USER in F:\study\spike-base)
+2026-10-20 17:23:21.360 DEBUG 47084 --- [           main] com.spiketrade.SpikeTradeApplication           : Running with Spring Boot v2.3.12.RELEASE, Spring v5.2.15.RELEASE
+2026-10-20 17:23:21.360  INFO 47084 --- [           main] com.spiketrade.SpikeTradeApplication           : No active profile set, falling back to default profiles: default
+2026-10-20 17:23:23.152  INFO 47084 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode!
+2026-10-20 17:23:23.159  INFO 47084 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-10-20 17:23:23.237  INFO 47084 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 42ms. Found 0 Redis repository interfaces.
+2026-10-20 17:23:26.221  INFO 47084 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8081 (http)
+2026-10-20 17:23:26.248  INFO 47084 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-20 17:23:26.249  INFO 47084 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.46]
+2026-10-20 17:23:26.417  INFO 47084 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-10-20 17:23:26.417  INFO 47084 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4887 ms
+2026-10-20 17:23:33.230  INFO 47084 --- [           main] org.redisson.Version                     : Redisson 3.13.6
+2026-10-20 17:23:34.478  INFO 47084 --- [sson-netty-4-23] o.r.c.pool.MasterPubSubConnectionPool    : 1 connections initialized for /127.0.0.1:6379
+2026-10-20 17:23:34.537  INFO 47084 --- [sson-netty-4-19] o.r.c.pool.MasterConnectionPool          : 24 connections initialized for /127.0.0.1:6379
+2026-10-20 17:23:35.020  INFO 47084 --- [           main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+2026-10-20 17:23:35.753  INFO 47084 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8081 (http) with context path ''
+2026-10-20 17:23:35.755  INFO 47084 --- [           main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [127.0.0.1:5672]
+2026-10-20 17:23:35.927  INFO 47084 --- [           main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#4d0753c9:0/SimpleConnection@2149594a [delegate=amqp://qqq@127.0.0.1:5672/, localPort= 65361]
+2026-10-20 17:23:36.041  INFO 47084 --- [           main] com.spiketrade.SpikeTradeApplication           : Started SpikeTradeApplication in 15.675 seconds (JVM running for 16.59)
+2026-10-20 17:23:37.232  INFO 47084 --- [nio-8081-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-10-20 17:23:37.233  INFO 47084 --- [nio-8081-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-10-20 17:23:37.246  INFO 47084 --- [nio-8081-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 13 ms
+2026-10-20 17:23:37.877  INFO 47084 --- [nio-8081-exec-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-20 17:23:38.188  INFO 47084 --- [nio-8081-exec-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-20 17:23:38.202 DEBUG 47084 --- [nio-8081-exec-1] c.spike.mapper.ShopTypeMapper.selectList  : ==>  Preparing: SELECT id,name,icon,sort,create_time,update_time FROM tb_shop_type ORDER BY sort ASC
+2026-10-20 17:23:38.246 DEBUG 47084 --- [nio-8081-exec-1] c.spike.mapper.ShopTypeMapper.selectList  : ==> Parameters:
+2026-10-20 17:23:38.296 DEBUG 47084 --- [nio-8081-exec-1] c.spike.mapper.ShopTypeMapper.selectList  : <==      Total: 10
