@@ -5,15 +5,13 @@ spring:
     name: spike
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/spike_trade?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8
-    username: root
+    url: "${TRADE_DB_URL:jdbc:mysql://127.0.0.1:3306/spike_trade?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8}"
+    username: "${TRADE_DB_USERNAME:root}"
     password: "${TRADE_DB_PASSWORD}"
   redis:
-    host: 127.0.0.1
-#    host: 192.168.3.236
-    port: 6379
-#    port: 6888
-    password: ${TRADE_REDIS_PASSWORD}
+    host: "${TRADE_REDIS_HOST:127.0.0.1}"
+    port: "${TRADE_REDIS_PORT:6379}"
+    password: "${TRADE_REDIS_PASSWORD}"
     lettuce:
       pool:
         max-active: 10
@@ -24,11 +22,11 @@ spring:
     default-property-inclusion: non_null # JSON处理时忽略非空字段
 
   rabbitmq:
-    host: 127.0.0.1
-    username: qqq
-    password: ${TRADE_MQ_PASSWORD}
-    virtual-host: /
-    port: 5672
+    host: "${TRADE_MQ_HOST:127.0.0.1}"
+    username: "${TRADE_MQ_USERNAME}"
+    password: "${TRADE_MQ_PASSWORD}"
+    virtual-host: "${TRADE_MQ_VHOST:/}"
+    port: "${TRADE_MQ_PORT:5672}"
     listener:
       simple:
         concurrency: 10
@@ -52,13 +50,13 @@ logging:
 spike:
   jwt:
     # 设置jwt签名加密时使用的秘钥
-    admin-secret-key: ${TRADE_JWT_SECRET}
+    admin-secret-key: "${TRADE_JWT_ADMIN_SECRET}"
     # 设置jwt过期时间
     admin-ttl: 21600000
     # 设置前端传递过来的令牌名称
     admin-token-name: authentication
     # 设置jwt签名加密时使用的秘钥
-    user-secret-key: ${TRADE_JWT_SECRET}
+    user-secret-key: "${TRADE_JWT_USER_SECRET}"
     # 设置jwt过期时间
     user-ttl: 21600000
     # 设置前端传递过来的令牌名称
