@@ -1,0 +1,12 @@
+# 采样元信息
+时间            2026-10-24 15:47:45
+BASE_URL        http://localhost:8081
+输出目录        ./run1
+预热次数        20（结果丢弃）
+采样次数        100（仅统计 HTTP 200，其余计入 fail，不写入样本）
+超时            10s
+百分位口径      第 k 个 = 排序后第 ceil(n*k/100) 个（最近秩法；n=100 时 p95=第95条）
+接口
+  shop-type-list  /shop-type/list
+  voucher-list  /voucher/list/1
+  blog-hot  /blog/hot?current=1

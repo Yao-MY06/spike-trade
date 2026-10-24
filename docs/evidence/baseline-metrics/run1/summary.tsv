@@ -1,0 +1,4 @@
+endpoint	n	fail	p50_ms	p95_ms	max_ms
+shop-type-list	100	0	6.818	10.284	35.330
+voucher-list	100	0	7.871	11.521	13.705
+blog-hot	100	0	17.071	22.371	34.761
