@@ -2,6 +2,8 @@
 
 > 本仓库从外部 fork 起步，**改造方不是我**。上游原文保留在文末「上游 README 原文」，本文件上半部分是我自己的基线登记、已知问题与改造日志，随改造同步更新。
 > 计划与验收标准见 `E:\50-个人系统\02-项目管理\微服务高并发交易平台实施与验收.md`（2.1 基线登记 / 3.1.1 底座选定 / 第四章三方向）。
+>
+> **历史说明（2026-10-28）**：本仓库历史经过一次凭据脱敏与去标识化重写，**所有 commit SHA 均已变化**；文中出现的旧 SHA 仅作叙述引用，不对应当前提交。
 
 ## 基线登记
 
@@ -26,7 +28,7 @@
 | 5 | **限流单机化**：Guava `RateLimiter` 为单机令牌桶且已被注释；真正限流走 `@RateLimiter` + Redis Lua | `VoucherOrderServiceImpl` / `limiter` 包 | 集群下 Guava 路径失效（当前未启用） | 方向一（拆分后重定限流边界） |
 | 6 | **包名拼写错误** `rebbitmq` | `com.spiketrade.rebbitmq` | 无功能影响 | 保留不改，避免污染改造 diff |
 | 7 | **依赖组合风险**：`spring-boot 2.3.12.RELEASE` + 手动覆盖 `spring-data-redis 2.7.2` + `lettuce 6.1.9`；`mysql-connector-java 5.1.47` 不支持 `caching_sha2_password`（MySQL 9.5 已移除 `mysql_native_password`） | `pom.xml` / `application.yaml` | 可能启动即报错或连不上库 | **已处理**：驱动升 `8.0.33` + `com.mysql.cj.jdbc.Driver`（commit 见日志）；`spring-data-redis 2.7.2` 与 boot 2.3.12 组合**能编能跑但属脆弱点，暂不动** |
-| 8 | **凭据散落两处**：`RedissonConfig` 硬编码 `setPassword("${TRADE_MQ_PASSWORD}")`，与 `application.yaml` 的 redis 密码各写各的 | `com.spiketrade.config.RedissonConfig` | 只改 yaml 会在启动时抛 `WRONGPASS`，排查成本高 | 已改为本机密码；后续建议改成读取 `spring.redis.*` 配置（属改造，暂不做） |
+| 8 | **凭据散落两处**：`RedissonConfig` 硬编码 redis 密码，与 `application.yaml` 的 redis 配置各写各的 | `com.spiketrade.config.RedissonConfig` | 只改 yaml 会在启动时抛 `WRONGPASS`，排查成本高 | 已改为读取配置项；后续建议统一到 `spring.redis.*`（属改造，暂不做） |
 | 9 | **签发与校验用了不同的 JWT 密钥**：`UserServiceImpl.login()` 用 `getUserSecretKey()` 签发，`RefreshTokenInterceptor` 用 `getAdminSecretKey()` 校验；当前 yaml 里两个 key 字面值相同所以能跑 | `UserServiceImpl` / `utils/RefreshTokenInterceptor` | 一旦把 user/admin 密钥按语义拆成不同值，**全部请求立刻 401**；这是隐藏的配置耦合 | 基线阶段**不改**（改了就偏离基线）；写进已知问题，改造时一并处理 |
 | 10 | **登录态已脱离 Redis**：`RefreshTokenInterceptor` 里基于 `login:token:*` 取用户的整段被注释，改为纯 JWT 无状态；`UserServiceImpl` 也不再写 Redis 用户 Hash | 同上 | 与课程原版「Redis 存登录态 + 续期」不同，**基线能力口径要按本 fork 记**，不能照抄原版说法 | 仅记录，不改 |
 | 11 | **商铺缓存未命中不查库**：`queryWithLogicalExpire()` 第一步 `isBlank(json)` 就 `return null`，没有查库兜底、没有空值缓存，且**全项目没有缓存预热入口** | `utils/CacheClient` + `ShopServiceImpl.queryBiId()` | 冷启动 / Redis 被清后，**所有商户详情返回「店铺不存在」**；这也是「缓存穿透」在基线里完全没设防的证据 | 改造点（方向二缓存体系）；基线阶段仅记录 |
