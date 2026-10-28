@@ -1,0 +1,12 @@
+采集时间：2026-10-28 16:36:53（Asia/Shanghai）
+应用自 run2 结束后是否又收到过请求：不知道（本次未查应用访问日志；performance_schema 无法区分请求来源，故不推断）
+DIGEST_TEXT	COUNT_STAR	avg_ms	max_ms	rows_examined_sum	rows_per_exec	total_ms
+SELECT COUNT ( * ) FROM `tb_blog`	120	1.56	18.86	0	0.0	187.2
+SELECT `id` , `phone` , PASSWORD , `nick_name` , `icon` , `create_time` , `update_time` FROM `tb_user` WHERE `id` = ?	480	0.25	3.306	480	1.0	119.8
+SELECT `v` . `id` , `v` . `shop_id` , `v` . `title` , `v` . `sub_title` , `v` . `rules` , `v` . `pay_value` , `v` . `actual_value` , `v` . `type` , `sv` . `stock` , `sv` . `begin_time` , `sv` . `end_time` FROM `tb_voucher` `v` LEFT JOIN `tb_seckill_voucher` `sv` ON `v` . `id` = `sv` . `voucher_id` WHERE `v` . `shop_id` = ? AND `v` . `status` = ?	120	0.65	2.988	360	3.0	77.9
+SELECT `id` , `shop_id` , `user_id` , `title` , `images` , `content` , `liked` , `comments` , `create_time` , `update_time` FROM `tb_blog` ORDER BY `liked` DESC LIMIT ?	120	0.37	0.689	960	8.0	44.4
+SELECT @@SESSION . `auto_increment_increment` AS `auto_increment_increment` , @@`character_set_client` AS `character_set_client` , @@`character_set_connection` AS `character_set_connection` , @@`character_set_results` AS `character_set_results` , @@`character_set_server` AS `character_set_server` , @@`collation_server` AS `collation_server` , @@`collation_connection` AS `collation_connection` , @@`init_connect` AS `init_connect` , @@`interactive_timeout` AS `interactive_timeout` , @@`license` AS `license` , @@`lower_case_table_names` AS `lower_case_table_names` , @@`max_allowed_packet` AS `max_allowed_packet` , @@`net_write_timeout` AS `net_write_timeout` , @@`performance_schema` AS `performance_schema` , @@`sql_mode` AS `sql_mode` , @@`system_time_zone` AS `system_time_zone` , @@`time_zone` AS `time_zone` , @@`transaction_isolation` AS `transaction_isolation` , @@`wait_timeout` AS `wait_timeout`	10	0.686	2.847	10	1.0	6.9
+SET `character_set_results` = ?	10	0.338	2.404	0	0.0	3.4
+SET `autocommit` = ?	10	0.152	0.563	0	0.0	1.5
+SELECT @@SESSION . `transaction_read_only`	10	0.14	0.256	10	1.0	1.4
+SELECT @@SESSION . `transaction_isolation`	1	0.185	0.185	1	1.0	0.2
