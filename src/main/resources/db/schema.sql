@@ -1274,11 +1274,35 @@ CREATE TABLE `tb_voucher_order`  (
   `use_time` timestamp NULL DEFAULT NULL COMMENT '核销时间',
   `refund_time` timestamp NULL DEFAULT NULL COMMENT '退款时间',
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`) USING BTREE
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_user_voucher` (`user_id`, `voucher_id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of tb_voucher_order
 -- ----------------------------
+
+
+-- ----------------------------
+-- Table structure for tb_seckill_outbox
+-- ----------------------------
+DROP TABLE IF EXISTS `tb_seckill_outbox`;
+CREATE TABLE `tb_seckill_outbox`  (
+  `id` bigint(20) NOT NULL COMMENT '订单号，同时作为消息 ID',
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT '用户 ID',
+  `voucher_id` bigint(20) UNSIGNED NOT NULL COMMENT '秒杀券 ID',
+  `payload` varchar(512) NOT NULL COMMENT '消息体 JSON',
+  `status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '0 NEW, 1 SENT, 2 DEAD',
+  `attempts` int(11) NOT NULL DEFAULT 0 COMMENT 'relay 领取次数',
+  `resend_count` int(11) NOT NULL DEFAULT 0 COMMENT '对账重发次数',
+  `next_retry_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '下次可领取时间',
+  `last_error` varchar(255) NULL DEFAULT NULL COMMENT '最近失败原因',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_outbox_user_voucher` (`user_id`, `voucher_id`) USING BTREE,
+  KEY `idx_outbox_status_retry` (`status`, `next_retry_at`) USING BTREE,
+  KEY `idx_outbox_voucher` (`voucher_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '秒杀可靠投递本地消息表' ROW_FORMAT = Compact;
 
 SET FOREIGN_KEY_CHECKS = 1;
