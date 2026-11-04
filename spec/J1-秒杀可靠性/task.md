@@ -8,7 +8,7 @@
 | 操作 | 文件 | 职责 |
 | --- | --- | --- |
 | 新增 | `src/main/resources/db/migration/J1-001-reliability.sql` | 订单唯一索引 + outbox 表（含重复数据检查 SQL） |
-| 修改 | `src/main/resources/schema.sql` | 同步迁移内容 |
+| 修改 | `src/main/resources/db/schema.sql` | 同步迁移内容 |
 | 修改 | `src/main/resources/seckill.lua` | 资格判断：zset 预约 + 缺库存 key 返回 3 |
 | 新增 | `src/main/resources/seckill_unreserve.lua` | 回滚预约（幂等） |
 | 新增 | `src/main/resources/seckill_snapshot.lua` | 原子读 (库存, 预约数) |
@@ -58,9 +58,9 @@
 - Handler：正常、重复投递、同用户第二单、库存不足回滚；Relay：ack/nack/return/异常；Reconciler：A–E 各一例；失败分类。
 
 ### T10 场景脚本
-- `e2e-duplicate.sh`（同一消息重复发布）、`e2e-broker-down.sh`（停 `$MQ_CONTAINER` 期间下单，恢复后落库）、`e2e-orphan.sh`（手工制造孤儿预约，对账回滚）、`e2e-deadletter.sh`（不可重试消息入死信）、`e2e-reconcile.sh`（五类各制造一次）。
+- `e2e-duplicate.sh`（同一消息重复发布）、`e2e-broker-down.sh`（停 `$MQ_CONTAINER` 期间下单，恢复后落库）、`e2e-orphan.sh`（手工制造孤儿预约，对账回滚）、`e2e-deadletter.sh`（不可重试消息入死信）、`e2e-reconcile.sh`（五类各制造一次）、`e2e-rollback.sh`（outbox 写入失败回滚预约）、`e2e-concurrent.sh`（N=3、M=5 并发）。另增 `lint-repo.sh`。
 - 脚本的容器名、口令等一律读环境变量，不写进仓库。
 
 ### T11 全量自动化验证与文档
-- `mvn -q test`、`mvn -q package`、`scripts/j1/test-lua.sh`、全部 e2e 脚本；原始输出入 `evidence/J1/`。
+- `mvn test`、`mvn package -DskipTests`、`scripts/j1/test-lua.sh`、全部 e2e 脚本；原始输出入 `evidence/J1/`。
 - 写 `docs/dev-log/J1.md`、`docs/interview/J1.md`，README 改造日志加一行，勾选 checklist。

@@ -30,7 +30,7 @@ flowchart LR
 | `seckill:stock:{voucherId}` | string（已有） | Redis 侧库存，需预热 |
 | `seckill:resv:{voucherId}` | **zset（新）** | 已预约用户：member = userId，score = 预约时刻（Unix 秒）。取代旧的 `seckill:order:{id}` set，因为需要时间来区分「在途」与「孤儿」 |
 
-### 2.2 MySQL（迁移脚本 `src/main/resources/db/migration/J1-001-reliability.sql`，同步写入 `schema.sql`）
+### 2.2 MySQL（迁移脚本 `src/main/resources/db/migration/J1-001-reliability.sql`，同步写入 `src/main/resources/db/schema.sql`）
 
 `tb_voucher_order` 新增 `UNIQUE KEY uk_user_voucher (user_id, voucher_id)`。
 
@@ -59,7 +59,7 @@ flowchart LR
 
 ### 2.4 配置项（`application.yaml`，均有默认值）
 
-`trade.seckill.relay.{interval-ms=200, batch-size=50, lease-ms=5000}`、`trade.seckill.consumer.{max-attempts=3, initial-interval-ms=500, max-interval-ms=5000}`、`trade.seckill.reconcile.{enabled=true, interval-ms=60000, grace-seconds=30, http-enabled=false}`；RabbitMQ 侧开启 `publisher-confirm-type: correlated`、`publisher-returns: true`、`template.mandatory: true`、`connection-timeout: 3000ms`，并**移除**会阻塞调用线程的 `template.retry`。
+`spring.task.scheduling.pool.size=2`（避免 relay 阻塞对账）、`trade.seckill.relay.{enabled=true, interval-ms=200, batch-size=50, lease-ms=5000}`、`trade.seckill.consumer.{max-attempts=3, initial-interval-ms=500, max-interval-ms=5000}`、`trade.seckill.reconcile.{enabled=true, interval-ms=60000, grace-seconds=30, http-enabled=false}`；RabbitMQ 侧开启 `publisher-confirm-type: correlated`、`publisher-returns: true`、`template.mandatory: true`、`connection-timeout: 3000ms`，并**移除**会阻塞调用线程的 `template.retry`。
 
 ## 3. 核心接口
 
@@ -85,13 +85,14 @@ flowchart LR
 
 1. 判空：`UserHolder.getUser()` 为空 → 返回「需要登录」（#4）。
 2. 执行 `seckill.lua`；`1/2/3` 直接返回对应提示。
-3. 生成订单号；`OutboxService.insertNew`。**任何异常** → 执行 `seckill_unreserve.lua` 回滚预约 → 返回「系统繁忙」。
+3. 生成订单号；`OutboxService.insertNew`。outbox 写入使用 5 秒事务超时（明显小于默认 30 秒宽限期）；**任何异常** → 执行 `seckill_unreserve.lua` 回滚预约 → 返回「系统繁忙」。
 4. 返回订单号。
 
 ### 5.2 投递与消费
 
 - relay 每 200 ms 取 `status=0 AND next_retry_at<=NOW(3)` 的行（≤50），逐行 `claim`（条件更新：`attempts+1`、`next_retry_at=NOW+lease`，影响行数为 1 才算领到），然后带 `CorrelationData(id)` 和 `message_id` 发布。
 - 收到 ack 且无 return → `status=1`；nack、return、发送异常 → 按 `LEAST(POW(2, attempts-1), 60)` 秒退避；确认迟迟不来 → lease 到期后被再次领取（可能重复发，由消费端幂等吸收）。
+- 发送遇连接类异常时结束当前批次，下一轮再按退避领取，不在同一批次逐行等待连接超时。
 - 消费者在一个事务里：**先插订单**（主键冲突且该 id 已存在 → `DUPLICATE_DELIVERY`，正常确认；冲突但 id 不存在 → 同用户另一订单 → 不可重试），**再** `UPDATE ... SET stock = stock - 1 WHERE voucher_id = ? AND stock > 0`，影响行数不为 1 → 不可重试并回滚订单。
 - 监听容器重试：可重试错误最多 3 次（0.5 s 起，×2）；耗尽或不可重试错误由 `RepublishMessageRecoverer` 发布到 `seckillDlx`，然后确认原消息。
 
@@ -138,7 +139,7 @@ flowchart LR
 
 - 旧队列 `seckillQueue` 与消息格式不变（`{"id","userId","voucherId"}`），不改队列参数，升级时队列里的存量消息仍可被新消费者处理。
 - 迁移脚本会因已有重复 `(user_id, voucher_id)` 数据而失败；脚本头部给出检查 SQL。
-- 旧 Redis key `seckill:order:*` 不再使用，升级后可手工删除；**预热库存 key 不变**。
+- J1 只支持新券，不迁移旧 `seckill:order:*`；旧 key 不再使用，升级后可手工删除，**预热库存 key 不变**。已有订单的券上，老用户可重复预约，E、D 类也会误报。
 
 ## 8. 环境注意
 

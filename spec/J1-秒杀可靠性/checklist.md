@@ -10,7 +10,7 @@
 - [ ] 订单表有 `(user_id, voucher_id)` 唯一索引（验证：`SHOW INDEX FROM tb_voucher_order` → 含 `uk_user_voucher`）
 - [ ] outbox 表存在且有唯一键（验证：`SHOW CREATE TABLE tb_seckill_outbox` → 含 `uk_outbox_user_voucher`）
 - [ ] 旧 `rebbitmq` 包已删除（验证：`ls src/main/java/com/spiketrade/rebbitmq` → 不存在）
-- [ ] 未登录请求不再空指针（验证：不带 token `POST /voucher-order/seckill/1` → 返回业务错误而非 500）
+- [ ] 未登录请求不再空指针（验证：不带 token `POST /voucher-order/seckill/1` → HTTP 401；另用单测验证 Service 在 `UserHolder` 为空时判空返回）
 - [ ] 仓库无禁用词与口令（验证：`bash scripts/j1/lint-repo.sh` → 无输出）
 
 ## 二、集成
@@ -19,17 +19,18 @@
 - [ ] 订单号贯穿（验证：接口返回值 = outbox.id = 订单 id）
 
 ## 三、编译与测试
-- [ ] `mvn -q test` 通过（验证：输出 `Tests run: N, Failures: 0, Errors: 0`）
-- [ ] `mvn -q package -DskipTests` 成功（验证：`BUILD SUCCESS`）
+- [ ] `mvn test` 通过（验证：输出 `Tests run: N, Failures: 0, Errors: 0`）
+- [ ] `mvn package -DskipTests` 成功（验证：`BUILD SUCCESS`）
 
 ## 四、端到端场景
 - [ ] **重复投递**：同一消息发布 5 次，订单只 1 行、库存只扣 1（验证：`bash scripts/j1/e2e-duplicate.sh` → PASS，输出订单数=1）
 - [ ] **broker 宕机**：停 `$MQ_CONTAINER` 期间下单 3 笔，接口均返回订单号；恢复后 ≤ 120 s 全部落库（验证：`bash scripts/j1/e2e-broker-down.sh` → PASS，输出恢复耗时）
 - [ ] **孤儿预约**：只做 Lua 不写 outbox，对账后预约被回滚、库存恢复（验证：`bash scripts/j1/e2e-orphan.sh` → PASS）
 - [ ] **死信**：库存已空的消息、同用户第二单的消息进入 `seckillDlq`，消息头含异常信息，主队列无积压（验证：`bash scripts/j1/e2e-deadletter.sh` → PASS，DLQ 计数 = 注入数）
-- [ ] **对账五类**：A–E 各制造一次均被识别，A、C 被修复（验证：`bash scripts/j1/e2e-reconcile.sh` → PASS，输出 `ReconcileReport`）
-- [ ] **库存恒等式**：任一时刻 `R+Z = D+O`（验证：以上每个场景结束时脚本断言）
-- [ ] **并发不超卖**：库存 N，并发 M>N 用户（多个 token）抢购，订单数 = N（验证：`bash scripts/j1/e2e-concurrent.sh` → PASS；注意清限流 key，见 plan §8）
+- [ ] **对账五类**：A–E 各制造一次均被识别，A、C 被修复；E 类制造期间跳过恒等式断言，修复后再断言（验证：`bash scripts/j1/e2e-reconcile.sh` → PASS，输出 `ReconcileReport`）
+- [ ] **库存恒等式**：任一时刻 `R+Z = D+O`（验证：每个非 E 类场景结束时脚本断言；E 类故意制造不等时不适用恒等式断言）
+- [ ] **并发不超卖**：N=3、M=5（多个 token）抢购，订单数 = 3。上限来自现有全局限流（每 100 秒 5 次），更大并发留给 J4（验证：`bash scripts/j1/e2e-concurrent.sh` → PASS；脚本先清 `limit/seckill*`，见 plan §8）
+- [ ] **写入失败回滚**：预插相同 `(user_id, voucher_id)` 的 outbox 行再下单 → 返回失败、预约回滚、库存恢复（验证：`bash scripts/j1/e2e-rollback.sh` → PASS）
 
 ## 五、证据与文档
 - [ ] 原始输出已保存（验证：`ls evidence/J1/` → 每个脚本一份 `.log`）
