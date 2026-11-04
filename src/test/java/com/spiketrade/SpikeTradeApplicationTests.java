@@ -5,6 +5,7 @@ import com.spiketrade.service.impl.ShopServiceImpl;
 import com.spiketrade.utils.RedisIdWorker;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.data.geo.Circle;
 import org.springframework.data.geo.Distance;
@@ -17,13 +18,17 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static com.spiketrade.utils.RedisConstants.SHOP_GEO_KEY;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@ActiveProfiles("test")
 @SpringBootTest
 class SpikeTradeApplicationTests {
 
@@ -41,10 +46,10 @@ class SpikeTradeApplicationTests {
     @Test
     void testIdWorker() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(300);
+        Set<Long> ids = ConcurrentHashMap.newKeySet();
         Runnable task = () -> {
             for (int i = 0; i < 100; i++) {
-                long id = redisIdWorker.nextId("order");
-                System.out.println("id = " + id);
+                ids.add(redisIdWorker.nextId("order"));
             }
             latch.countDown();
         };
@@ -55,7 +60,8 @@ class SpikeTradeApplicationTests {
         latch.await();
 
         long end = System.currentTimeMillis();
-        System.out.println("time=" + (end-begin));
+        assertEquals(30000, ids.size());
+        System.out.println("generated_unique_ids=" + ids.size() + ", elapsed_ms=" + (end-begin));
     }
 
     @Test

@@ -45,6 +45,7 @@
 | 2026-10-20 | `docs: runbook` | 文档 | 五步重建流程 + 四个已踩坑 + 启动判定标准；新增健康检查证据 | `docs/runbook.md`；`docs/evidence/baseline/02-healthcheck.md` |
 | 2026-10-20 | `evidence: 登录 + 秒杀` | 基线证据 | 登录链路（JWT 155 字符、自动注册 id=1011）+ 秒杀链路（orderId `650795538001690630`、MQ 发送→消费 147ms、Redis/DB 库存 99、重复下单被拒） | `docs/evidence/baseline/04-login.md`、`05-seckill.md` |
 | 2026-10-20 | `evidence: 缓存三路径` | 基线证据 | 未命中/命中/过期重建三条路径 + 发现 #11 未命中不查库、#12 二级缓存名不副实、Redis 与阶段四共用实例 | `docs/evidence/baseline/06-cache.md` |
+| 2026-11-04 | `J1-T11` | 秒杀可靠主链 | Lua 预约 + 本地消息表 + relay confirm + 幂等消费/DLQ + A-E 对账 + 7 个 e2e；全部证据脱敏 | `spec/J1-秒杀可靠性/`、`evidence/J1/`、`docs/dev-log/J1.md` |
 
 ## 待办前置（按顺序，未完成不进入改造）
 

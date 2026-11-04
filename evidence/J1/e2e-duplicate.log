@@ -1,0 +1,2 @@
+PASS: identity R+Z = D+O = 1
+PASS: same message published five times produced one order

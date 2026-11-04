@@ -1,0 +1,2 @@
+dead_letter_headers_ok=2
+PASS: two non-retryable messages reached DLQ with exception headers

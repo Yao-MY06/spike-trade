@@ -1,0 +1,8 @@
+PASS: reservation writes zset score=1793802259
+PASS: duplicate reservation rejected
+PASS: stock exhaustion rejected
+PASS: missing stock key returns 3
+PASS: unreserve is idempotent
+PASS: snapshot returns stock:reservations
+PASS: 200 concurrent attempts with stock 20 released exactly 20
+ALL LUA TESTS PASS

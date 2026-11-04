@@ -4,7 +4,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 start_evidence e2e-deadletter
 wait_url "$BASE_URL/shop-type/list"
 prepare_voucher 1
-trap cleanup_voucher EXIT
+trap 'cleanup_voucher; finish_evidence' EXIT
 
 TOKEN_VALUE="$(require_token)"
 USER_ID="$(token_user_id "$TOKEN_VALUE")"
@@ -37,7 +37,7 @@ assert_eq 2 "$DLQ_COUNT" "DLQ message count"
 assert_eq 0 "$(queue_messages seckillQueue)" "main queue messages"
 
 DLQ_JSON_FILE="$(mktemp)"
-trap 'rm -f "$DLQ_JSON_FILE"; cleanup_voucher' EXIT
+trap 'rm -f "$DLQ_JSON_FILE"; cleanup_voucher; finish_evidence' EXIT
 mq_admin get queue=seckillDlq count=2 ackmode=ack_requeue_true --format=raw_json > "$DLQ_JSON_FILE"
 python -c '
 import json, sys

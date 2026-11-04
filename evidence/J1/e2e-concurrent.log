@@ -1,0 +1,2 @@
+{"success":true,"data":656420523525275653}{"success":true,"data":656420523525275654}{"success":true,"data":656420523525275655}{"success":false,"errorMsg":"库存不足"}{"success":false,"errorMsg":"库存不足"}PASS: identity R+Z = D+O = 3
+PASS: N=3 M=5 concurrent scenario created exactly three orders

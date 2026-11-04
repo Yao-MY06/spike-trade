@@ -1,0 +1,3 @@
+{"success":true,"data":{"voucherId":93801417347,"redisStock":0,"redisReservationCount":1,"dbStock":1,"orderCount":0,"consistent":false,"repairedCount":1,"issues":[{"type":"A","subject":"userId=1010","action":"REPAIRED","detail":"过期预约已回滚，reservedAt=1793801302"}]}}
+PASS: identity R+Z = D+O = 1
+PASS: orphan reservation was repaired by reconcile

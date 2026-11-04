@@ -87,10 +87,22 @@ filter_log() {
   done
 }
 
+EVIDENCE_TEE_PID=""
+
 start_evidence() {
   local name="$1"
   mkdir -p "$EVIDENCE_DIR"
   exec > >(filter_log | tee "$EVIDENCE_DIR/$name.log") 2>&1
+  EVIDENCE_TEE_PID=$!
+  trap finish_evidence EXIT
+}
+
+finish_evidence() {
+  if [[ -n "${EVIDENCE_TEE_PID:-}" ]]; then
+    exec 1>&- 2>&-
+    wait "$EVIDENCE_TEE_PID" || true
+    EVIDENCE_TEE_PID=""
+  fi
 }
 
 fail() {

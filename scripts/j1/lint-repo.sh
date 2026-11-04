@@ -4,7 +4,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 start_evidence lint-repo
 
 TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
+trap 'rm -rf "$TMP_DIR"; finish_evidence' EXIT
 FILES=()
 while IFS= read -r -d '' file; do
   FILES+=("$file")

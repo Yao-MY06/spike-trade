@@ -1,0 +1,3 @@
+tb_seckill_outbox	uk_outbox_user_voucher	user_id,voucher_id
+tb_voucher_order	uk_user_voucher	user_id,voucher_id
+1

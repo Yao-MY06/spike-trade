@@ -1,0 +1,7 @@
+{"success":true,"data":656421227899912200}{"success":true,"data":656421232194879497}{"success":true,"data":656421232194879498}id	status
+656421227899912200	0
+656421232194879497	0
+656421232194879498	0
+recovery_elapsed_ms=22211
+PASS: identity R+Z = D+O = 3
+PASS: broker outage recovered in 22211 ms

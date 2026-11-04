@@ -1,0 +1,3 @@
+{"success":false,"errorMsg":"系统繁忙，请稍后重试"}
+PASS: identity R+Z = D+O = 1
+PASS: outbox unique conflict rolled back the Redis reservation

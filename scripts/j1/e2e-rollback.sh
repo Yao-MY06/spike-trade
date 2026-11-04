@@ -4,7 +4,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 start_evidence e2e-rollback
 wait_url "$BASE_URL/shop-type/list"
 prepare_voucher 1
-trap cleanup_voucher EXIT
+trap 'cleanup_voucher; finish_evidence' EXIT
 
 TOKEN_VALUE="$(require_token)"
 USER_ID="$(token_user_id "$TOKEN_VALUE")"

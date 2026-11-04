@@ -6,7 +6,7 @@ wait_url "$BASE_URL/shop-type/list"
 prepare_voucher 3
 TMP_DIR="$(mktemp -d)"
 cleanup() { cleanup_voucher; rm -rf "$TMP_DIR"; }
-trap cleanup EXIT
+trap 'cleanup; finish_evidence' EXIT
 
 TOKEN_LIST="${TOKENS:-}"
 TOKENS=() 

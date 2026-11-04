@@ -10,7 +10,7 @@ cleanup() {
   cleanup_voucher
   rm -rf "$TMP_DIR"
 }
-trap cleanup EXIT
+trap 'cleanup; finish_evidence' EXIT
 
 TOKENS=()
 for suffix in 1 2 3; do
