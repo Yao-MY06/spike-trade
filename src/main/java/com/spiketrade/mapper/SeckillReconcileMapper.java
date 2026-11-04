@@ -10,6 +10,9 @@ import java.util.List;
 
 public interface SeckillReconcileMapper {
 
+    @Select("SELECT voucher_id FROM tb_seckill_voucher")
+    List<Long> selectVoucherIds();
+
     @Select("SELECT stock AS dbStock, " +
             "(SELECT COUNT(*) FROM tb_voucher_order WHERE voucher_id = #{voucherId}) AS orderCount " +
             "FROM tb_seckill_voucher WHERE voucher_id = #{voucherId}")

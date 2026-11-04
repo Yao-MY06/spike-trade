@@ -3,11 +3,14 @@ package com.spiketrade.seckill;
 import com.spiketrade.utils.RedisConstants;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class SeckillScripts {
@@ -50,6 +53,24 @@ public class SeckillScripts {
 
     public String snapshot(Long voucherId) {
         return redisTemplate.execute(SNAPSHOT_SCRIPT, keys(voucherId));
+    }
+
+
+    public List<Reservation> reservations(Long voucherId) {
+        Set<ZSetOperations.TypedTuple<String>> tuples = redisTemplate.opsForZSet()
+                .rangeWithScores(RedisConstants.SECKILL_RESV_KEY + voucherId, 0, -1);
+        List<Reservation> reservations = new ArrayList<>();
+        if (tuples == null) {
+            return reservations;
+        }
+        for (ZSetOperations.TypedTuple<String> tuple : tuples) {
+            if (tuple.getValue() != null && tuple.getScore() != null) {
+                reservations.add(new Reservation(
+                        Long.valueOf(tuple.getValue()),
+                        tuple.getScore().longValue()));
+            }
+        }
+        return reservations;
     }
 
     private List<String> keys(Long voucherId) {
