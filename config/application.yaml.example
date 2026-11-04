@@ -5,3 +5,8 @@ TRADE_MQ_USERNAME: "CHANGE_ME"
 TRADE_MQ_PASSWORD: "CHANGE_ME"
 TRADE_JWT_ADMIN_SECRET: "CHANGE_ME"
 TRADE_JWT_USER_SECRET: "CHANGE_ME"
+
+# 秒杀可靠投递的默认配置在 src/main/resources/application.yaml：
+# spring.task.scheduling.pool.size=2
+# trade.seckill.relay.enabled=true
+# trade.seckill.reconcile.http-enabled=false

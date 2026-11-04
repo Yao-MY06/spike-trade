@@ -20,6 +20,10 @@ spring:
         time-between-eviction-runs: 10s
   jackson:
     default-property-inclusion: non_null # JSON处理时忽略非空字段
+  task:
+    scheduling:
+      pool:
+        size: 2
 
   rabbitmq:
     host: "${TRADE_MQ_HOST:127.0.0.1}"
@@ -27,20 +31,18 @@ spring:
     password: "${TRADE_MQ_PASSWORD}"
     virtual-host: "${TRADE_MQ_VHOST:/}"
     port: "${TRADE_MQ_PORT:5672}"
+    connection-timeout: 3000ms
+    publisher-confirm-type: correlated
+    publisher-returns: true
     listener:
       simple:
         concurrency: 10
         max-concurrency: 10
         prefetch: 1
         auto-startup: true
-        default-requeue-rejected: true
+        default-requeue-rejected: false
     template:
-      retry:
-        enabled: true
-        initial-interval: 1000ms
-        max-attempts: 3
-        max-interval: 10000ms
-        multiplier: 1
+      mandatory: true
 mybatis-plus:
   type-aliases-package: com.spiketrade.entity # 别名扫描包
 logging:
@@ -61,3 +63,20 @@ spike:
     user-ttl: 21600000
     # 设置前端传递过来的令牌名称
     user-token-name: authentication
+
+trade:
+  seckill:
+    relay:
+      enabled: true
+      interval-ms: 200
+      batch-size: 50
+      lease-ms: 5000
+    consumer:
+      max-attempts: 3
+      initial-interval-ms: 500
+      max-interval-ms: 5000
+    reconcile:
+      enabled: true
+      interval-ms: 60000
+      grace-seconds: 30
+      http-enabled: false
