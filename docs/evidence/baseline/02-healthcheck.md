@@ -19,7 +19,7 @@ HTTP/1.1 200
 | --- | --- |
 | MySQL 9.5 + connector 8.0.33 打通 | 应用日志 `HikariPool-1 - Start completed.` + 本次请求触发 `SELECT ... FROM tb_shop_type`，返回 10 条（与 `spike_trade` 导入的基线数据一致） |
 | 库是 `spike_trade` 不是阶段四的 `spike` | `spike` 库中 `tb_shop_type` 曾按阶段四需求改动过；本次返回 10 条为标准基线数据，且启动配置指向 `spike_trade` |
-| Spring 上下文完整（含 Redisson、RabbitMQ） | 启动日志 `24 connections initialized for /127.0.0.1:6379` + `amqp://qqq@127.0.0.1:5672/` |
+| Spring 上下文完整（含 Redisson、RabbitMQ） | 启动日志 `24 connections initialized for /127.0.0.1:6379` + `amqp://${TRADE_MQ_USERNAME}@127.0.0.1:5672/` |
 | 端口 8081 由本应用占用 | `Tomcat started on port(s): 8081` + `netstat` 显示 PID 47084 监听 8081 |
 
 ## 尚未证明（不要写成已完成）

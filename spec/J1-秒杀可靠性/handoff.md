@@ -18,7 +18,7 @@
 
 - 每个 T 一个 commit，信息以 `J1-Tn: ` 开头；作者 `Yao-MY06 <2315686880@qq.com>`；不要 push。
 - 不改现有 `@RateLimiter`；不碰 `05-资源库` 和 `E:\50-个人系统`。
-- 仓库文件不得出现原课程项目名、指定禁用词、本机容器名、口令。
+- 仓库文件不得出现原课程项目名及相关禁用词、本机容器名、口令。
 - 发现设计错误先说明，再改文档，不要静默偏离。跑不了的标 `[未验证]` 并写原因；没测的数字写「未测」。
 - Redis 与其他阶段共用实例：**禁止 FLUSH**，只删自己用到的 key。不要使用或重建 `spike` 库。
 
@@ -92,7 +92,7 @@
 ## 6. 去标识化
 
 - `lint-repo.sh` 用 `git ls-files` 加未跟踪文件作为范围。禁用词不能明文写在脚本里，否则会命中自己，用 base64 存放；容器名和口令从环境变量读。
-- `redis` 太通用，只匹配 `docker start redis`、`docker exec redis` 这类用法。
+- `redis` 太通用，只匹配 `docker start "$REDIS_CONTAINER"`、`docker exec "$REDIS_CONTAINER"` 这类用法。
 - 需清理的现有文件：`docs/runbook.md`、`docs/evidence/environment.md`、`docs/evidence/baseline/` 下的 `01-startup.log`、`02-healthcheck.md`、`03-prep-and-sendcode.md`。容器名换成 `$MQ_CONTAINER` 等占位符，MQ 用户名换成 `${TRADE_MQ_USERNAME}`。基线证据只做这种替换，并记入 dev-log。
 - `@author` 里的署名与 MQ 用户名字面值相同，不属于本模块改动范围，不要让 lint 把它算作命中；在 dev-log 说明。
 - 存入 `evidence/J1/` 前统一脱敏：Spring Boot 启动日志会打印含原项目名的绝对路径，还可能带容器名和连接用户名。在 `lib.sh` 放一个过滤函数，所有日志都经过它。

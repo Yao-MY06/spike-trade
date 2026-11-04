@@ -30,8 +30,8 @@ id   type status stock begin_time          end_time
 ## 2. 预热 Redis 库存
 
 ```
-docker exec redis redis-cli -a ${TRADE_REDIS_PASSWORD} set seckill:stock:100 100   → OK
-docker exec redis redis-cli -a ${TRADE_REDIS_PASSWORD} get seckill:stock:100       → 100
+docker exec "$REDIS_CONTAINER" redis-cli -a ${TRADE_REDIS_PASSWORD} set seckill:stock:100 100   → OK
+docker exec "$REDIS_CONTAINER" redis-cli -a ${TRADE_REDIS_PASSWORD} get seckill:stock:100       → 100
 ```
 
 **`seckill:order:100` 不必预建**：`seckill.lua` 里 `sismember` 对不存在的 key 返回 0，不会报错。但 **`seckill:stock:100` 必须先建**——脚本第一行 `tonumber(redis.call('get', stockKey)) <= 0`，key 不存在时 `get` 返回 false，`tonumber(false)` 会直接让 Lua 报错。
@@ -42,7 +42,7 @@ docker exec redis redis-cli -a ${TRADE_REDIS_PASSWORD} get seckill:stock:100    
 POST http://localhost:8081/user/code?phone=13800138000
 → {"success":true}
 
-docker exec redis redis-cli -a ${TRADE_REDIS_PASSWORD} get login:code:13800138000
+docker exec "$REDIS_CONTAINER" redis-cli -a ${TRADE_REDIS_PASSWORD} get login:code:13800138000
 → 385115（6 位随机数，TTL 按 LOGIN_CODE_TTL 分钟）
 ```
 

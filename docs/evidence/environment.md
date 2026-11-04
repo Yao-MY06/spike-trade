@@ -37,8 +37,8 @@
 | Maven | **3.9.16**（`E:\work\apache-maven-3.9.16`），本次以 `JAVA_HOME=F:\path` 运行，`mvn -v` 报告 Java 11.0.32.1 / Adoptium | `mvn -v` |
 | 应用框架 | Spring Boot **2.3.12.RELEASE** / Spring 5.2.15.RELEASE | 源码 `pom.xml`；启动日志 |
 | MySQL | **9.5.0 MySQL Community Server - GPL**（InnoDB 9.5.0），本机安装，3306 | `select @@version, @@version_comment, @@innodb_version` |
-| Redis | 容器 `redis`，镜像 `redis:6.2`；**服务端 v=6.2.24**（jemalloc-5.1.0，64 位）；容器 Up，6379 监听 | `docker exec redis redis-server --version` |
-| RabbitMQ | 容器 `spike-rabbitmq`，镜像 `rabbitmq:3.8-management`；**服务端 3.8.34**；容器 Up，5672 / 15672 监听 | `docker exec spike-rabbitmq rabbitmqctl version` |
+| Redis | 容器 `$REDIS_CONTAINER`，镜像 `redis:6.2`；**服务端 v=6.2.24**（jemalloc-5.1.0，64 位）；容器 Up，6379 监听 | `docker exec "$REDIS_CONTAINER" redis-server --version` |
+| RabbitMQ | 容器 `$MQ_CONTAINER`，镜像 `rabbitmq:3.8-management`；**服务端 3.8.34**；容器 Up，5672 / 15672 监听 | `docker exec $MQ_CONTAINER rabbitmqctl version` |
 | Docker | Docker Desktop，引擎 29.4.3（containerized） | `docker info` |
 | 连接池 | HikariCP（Spring Boot 2.3 默认） | 启动日志 `HikariPool-1` |
 | 前端 | nginx 1.18.0（`F:\study\spike-nginx`），80 端口；本次指标采集**不使用前端** | 历史记录 |

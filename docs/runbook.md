@@ -10,20 +10,20 @@
 | JDK | 11.0.32.1 Temurin，`F:\path` | 默认 `java` 是 25，构建/运行都要显式指定 |
 | Maven | 3.9.16，`E:\work\apache-maven-3.9.16` | 它自己跑在 JDK 25 上，靠 `JAVA_HOME` 切换 |
 | MySQL | 9.5，3306，root / `${TRADE_DB_PASSWORD}` | 密码随命令行会告警，正常 |
-| Redis | 容器 `redis`（`redis:6.2`），6379，密码 `${TRADE_REDIS_PASSWORD}` | `docker start redis` |
-| RabbitMQ | 容器 `spike-rabbitmq`（`rabbitmq:3.8-management`），5672 / 15672，`qqq` / `${TRADE_MQ_PASSWORD}` | 与基线 README 声明版本对齐 |
+| Redis | 容器 `$REDIS_CONTAINER`（`redis:6.2`），6379，密码 `${TRADE_REDIS_PASSWORD}` | `docker start "$REDIS_CONTAINER"` |
+| RabbitMQ | 容器 `$MQ_CONTAINER`（`rabbitmq:3.8-management`），5672 / 15672，`${TRADE_MQ_USERNAME}` / `${TRADE_MQ_PASSWORD}` | 与基线 README 声明版本对齐 |
 | 前端 | nginx 1.18.0，`F:\study\spike-nginx`，占 80 | 只用浏览器验证时启动，接口验证不需要 |
 
 ## 第 1 步：起中间件
 
 ```bash
-docker start redis            # 已存在则复用，勿重建（数据要留）
-docker start spike-rabbitmq    # 首次创建用下面这条
-# docker run -d --name spike-rabbitmq -p 5672:5672 -p 15672:15672 \
-#   -e RABBITMQ_DEFAULT_USER=qqq -e RABBITMQ_DEFAULT_PASS=${TRADE_MQ_PASSWORD} rabbitmq:3.8-management
+docker start "$REDIS_CONTAINER"            # 已存在则复用，勿重建（数据要留）
+docker start $MQ_CONTAINER    # 首次创建用下面这条
+# docker run -d --name $MQ_CONTAINER -p 5672:5672 -p 15672:15672 \
+#   -e RABBITMQ_DEFAULT_USER=${TRADE_MQ_USERNAME} -e RABBITMQ_DEFAULT_PASS=${TRADE_MQ_PASSWORD} rabbitmq:3.8-management
 
 # 自检
-docker exec redis redis-cli -a ${TRADE_REDIS_PASSWORD} ping          # 期望 PONG
+docker exec "$REDIS_CONTAINER" redis-cli -a ${TRADE_REDIS_PASSWORD} ping          # 期望 PONG
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:15672   # 期望 200
 ```
 
@@ -66,7 +66,7 @@ mvn -B -DskipTests package          # 首次约 3 分钟（拉依赖），增量
 
 ```
 Tomcat started on port(s): 8081
-Created new connection: rabbitConnectionFactory ... [delegate=amqp://qqq@127.0.0.1:5672/]
+Created new connection: rabbitConnectionFactory ... [delegate=amqp://${TRADE_MQ_USERNAME}@127.0.0.1:5672/]
 Started SpikeTradeApplication in 15.6 seconds
 HikariPool-1 - Start completed.
 ```
@@ -92,7 +92,7 @@ values (100,100,now(),date_sub(now(),interval 1 hour),date_add(now(),interval 1 
 
 ```bash
 # 预热 Redis 库存（必须建，否则 Lua 里 tonumber(nil/false) 直接报错）
-docker exec redis redis-cli -a ${TRADE_REDIS_PASSWORD} set seckill:stock:100 100
+docker exec "$REDIS_CONTAINER" redis-cli -a ${TRADE_REDIS_PASSWORD} set seckill:stock:100 100
 # seckill:order:100 不必预建，sismember 对不存在的 key 返回 0
 ```
 
@@ -101,7 +101,7 @@ docker exec redis redis-cli -a ${TRADE_REDIS_PASSWORD} set seckill:stock:100 100
 | 现象 | 根因 | 处理 |
 | --- | --- | --- |
 | 导库报 `ERROR 1067 Invalid default value for 'begin_time'` | SQL 用了 `0000-00-00` 零日期，MySQL 9.5 严格模式拒绝 | 导入时 `--init-command="SET SESSION sql_mode='NO_ENGINE_SUBSTITUTION'"` |
-| 启动报 `Unable to connect ... /127.0.0.1:6379: WRONGPASS` | `RedissonConfig` 硬编码 `${TRADE_MQ_PASSWORD}`，与 yaml 是两套凭据 | 改 `RedissonConfig` 源码 |
+| 启动报 `Unable to connect ... /127.0.0.1:6379: WRONGPASS` | `RedissonConfig` 使用 `${TRADE_REDIS_PASSWORD}`；占位符写错会报 `WRONGPASS` | 改 `RedissonConfig` 源码 |
 | 连库报认证失败 / `Public Key Retrieval is not allowed` | `mysql-connector 5.1.47` 不支持 MySQL 9.5 的 `caching_sha2_password` | 驱动升 `8.0.33`，driver 类名改 `com.mysql.cj.jdbc.Driver` |
 | `Web server failed to start. Port 49695 was already in use` | 后台托管启动时端口被外部注入，配置文件里的 8081 未生效 | 启动命令显式 `--server.port=8081` |
 
