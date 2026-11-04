@@ -6,6 +6,7 @@ import com.spiketrade.mapper.SeckillOutboxMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.AmqpConnectException;
 import org.springframework.amqp.AmqpIOException;
+import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -79,6 +80,7 @@ public class OutboxRelay {
         MessagePostProcessor messagePostProcessor = message -> {
             message.getMessageProperties().setMessageId(String.valueOf(id));
             message.getMessageProperties().setContentType("application/json");
+            message.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
             return message;
         };
 

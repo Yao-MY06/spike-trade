@@ -16,9 +16,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
+import com.spiketrade.seckill.NonRetryableSeckillException;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
-import java.util.Collections;
 
 @Configuration
 public class SeckillMqConfig {
@@ -56,9 +59,12 @@ public class SeckillMqConfig {
             @Value("${trade.seckill.consumer.initial-interval-ms:500}") long initialIntervalMs,
             @Value("${trade.seckill.consumer.max-interval-ms:5000}") long maxIntervalMs) {
         RetryTemplate retryTemplate = new RetryTemplate();
+        Map<Class<? extends Throwable>, Boolean> retryableExceptions = new HashMap<>();
+        retryableExceptions.put(Exception.class, true);
+        retryableExceptions.put(NonRetryableSeckillException.class, false);
         retryTemplate.setRetryPolicy(new SimpleRetryPolicy(
                 maxAttempts,
-                Collections.<Class<? extends Throwable>, Boolean>emptyMap(),
+                retryableExceptions,
                 true));
         ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
         backOffPolicy.setInitialInterval(initialIntervalMs);
