@@ -1,0 +1,11 @@
+trade:
+  seckill:
+    relay:
+      enabled: false
+    reconcile:
+      enabled: false
+spring:
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
