@@ -4,7 +4,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 start_evidence test-migration
 
 CHECK_DB=j1_migration_check
-BASELINE_COMMIT=8583f40
+BASELINE_COMMIT=e979557
 SCHEMA=src/main/resources/db/schema.sql
 MIGRATION="$ROOT/src/main/resources/db/migration/J1-001-reliability.sql"
 SQL_MODE_INIT="SET SESSION sql_mode='NO_ENGINE_SUBSTITUTION'"
