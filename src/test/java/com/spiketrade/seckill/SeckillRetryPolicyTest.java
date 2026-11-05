@@ -6,6 +6,7 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.ProxyMethodInvocation;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.support.ListenerExecutionFailedException;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.retry.MessageRecoverer;
@@ -39,6 +40,32 @@ class SeckillRetryPolicyTest {
 
         verify(invocation, times(3)).proceed();
         verify(recoverer).recover(any(Message.class), any(IllegalStateException.class));
+    }
+
+    @Test
+    void nonRetryableWrappedByListenerAdapterIsRecoveredWithoutRetry() throws Throwable {
+        MessageRecoverer recoverer = mock(MessageRecoverer.class);
+        MethodInterceptor interceptor = config().seckillRetryInterceptor(recoverer, 3, 1, 1);
+        MethodInvocation invocation = invocationThrowing(new ListenerExecutionFailedException(
+                "listener failed", new NonRetryableSeckillException("deterministic"), message()));
+
+        interceptor.invoke(invocation);
+
+        verify(invocation, times(1)).proceed();
+        verify(recoverer).recover(any(Message.class), any(ListenerExecutionFailedException.class));
+    }
+
+    @Test
+    void transientWrappedByListenerAdapterIsRetriedThreeTimes() throws Throwable {
+        MessageRecoverer recoverer = mock(MessageRecoverer.class);
+        MethodInterceptor interceptor = config().seckillRetryInterceptor(recoverer, 3, 1, 1);
+        MethodInvocation invocation = invocationThrowing(new ListenerExecutionFailedException(
+                "listener failed", new IllegalStateException("transient"), message()));
+
+        interceptor.invoke(invocation);
+
+        verify(invocation, times(3)).proceed();
+        verify(recoverer).recover(any(Message.class), any(ListenerExecutionFailedException.class));
     }
 
     private SeckillMqConfig config() {

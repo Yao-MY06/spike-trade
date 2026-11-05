@@ -18,8 +18,7 @@ import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
 import com.spiketrade.seckill.NonRetryableSeckillException;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
 
 import javax.annotation.PostConstruct;
 
@@ -59,12 +58,13 @@ public class SeckillMqConfig {
             @Value("${trade.seckill.consumer.initial-interval-ms:500}") long initialIntervalMs,
             @Value("${trade.seckill.consumer.max-interval-ms:5000}") long maxIntervalMs) {
         RetryTemplate retryTemplate = new RetryTemplate();
-        Map<Class<? extends Throwable>, Boolean> retryableExceptions = new HashMap<>();
-        retryableExceptions.put(Exception.class, true);
-        retryableExceptions.put(NonRetryableSeckillException.class, false);
+        // 默认必须是可重试：监听异常被 ListenerExecutionFailedException 包裹，
+        // 分类器只有在命中默认值时才会继续检查 cause。
         retryTemplate.setRetryPolicy(new SimpleRetryPolicy(
                 maxAttempts,
-                retryableExceptions,
+                Collections.<Class<? extends Throwable>, Boolean>singletonMap(
+                        NonRetryableSeckillException.class, false),
+                true,
                 true));
         ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
         backOffPolicy.setInitialInterval(initialIntervalMs);
