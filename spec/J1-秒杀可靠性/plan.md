@@ -59,7 +59,7 @@ flowchart LR
 
 ### 2.4 配置项（`application.yaml`，均有默认值）
 
-`spring.task.scheduling.pool.size=2`（避免 relay 阻塞对账）、`trade.seckill.relay.{enabled=true, interval-ms=200, batch-size=50, lease-ms=5000}`、`trade.seckill.consumer.{max-attempts=3, initial-interval-ms=500, max-interval-ms=5000}`、`trade.seckill.reconcile.{enabled=true, interval-ms=60000, grace-seconds=30, http-enabled=false}`；RabbitMQ 侧开启 `publisher-confirm-type: correlated`、`publisher-returns: true`、`template.mandatory: true`、`connection-timeout: 3000ms`，并**移除**会阻塞调用线程的 `template.retry`。
+`spring.task.scheduling.pool.size=2`（避免 relay 阻塞对账）、`trade.seckill.relay.{enabled=true, interval-ms=200, batch-size=50, lease-ms=5000}`、`trade.seckill.consumer.{max-attempts=3, initial-interval-ms=500, max-interval-ms=5000}`、`trade.seckill.reconcile.{enabled=true, interval-ms=60000, grace-seconds=30, http-enabled=false}`；RabbitMQ 侧开启 `publisher-confirm-type: correlated`、`publisher-returns: true`、`template.mandatory: true`、`connection-timeout: 3000ms`，`listener.simple.default-requeue-rejected: false`（死信发布也失败时消息被丢弃，由对账 C 类补发），并**移除**会阻塞调用线程的 `template.retry`。
 
 ## 3. 核心接口
 
@@ -71,7 +71,7 @@ flowchart LR
 | `seckill_unreserve.lua` | `KEYS[1]=stock, KEYS[2]=resv; ARGV[1]=userId` → `1` 已回滚 / `0` 本就不存在 | `ZREM` 成功才 `INCR`，幂等 |
 | `seckill_snapshot.lua` | `KEYS[1]=stock, KEYS[2]=resv` → 字符串 `"<stock\|nil>:<zcard>"` | 原子读取一对值，对账用 |
 | `OutboxService.insertNew(id, userId, voucherId)` | 写 outbox，唯一键冲突抛异常 | 请求线程调用 |
-| `OutboxRelay.poll()` | `@Scheduled` | 领取 → 发送 → confirm 回调标记 |
+| `OutboxRelay.poll()` | `@Scheduled` | 领取 → 发送 → 同步等待 confirm（最长 `lease-ms`）→ 标记 |
 | `SeckillOrderHandler.createOrder(msg)` | `@Transactional` → `CREATED / DUPLICATE_DELIVERY` | 不可恢复情况抛 `NonRetryableSeckillException` |
 | `SeckillReconciler.reconcile(voucherId)` | → `ReconcileReport` | 见 §5.4 |
 

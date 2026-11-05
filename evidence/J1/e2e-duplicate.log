@@ -1,2 +1,3 @@
+publish_attempts=5 order_count=1 db_stock=0
 PASS: identity R+Z = D+O = 1
 PASS: same message published five times produced one order

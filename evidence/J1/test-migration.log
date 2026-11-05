@@ -1,0 +1,3 @@
+empty_db_schema unique_indexes=2
+existing_db_migration unique_indexes=2 kept_orders=1
+PASS: migration works on empty and existing databases and rejects a duplicate order

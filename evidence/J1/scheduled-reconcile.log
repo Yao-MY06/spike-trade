@@ -1,0 +1,6 @@
+# 定时对账（scheduling 线程）在 e2e 期间写入应用日志的 WARN 行
+2026-11-05 10:46:53.956 [   scheduling-1] c.spiketrade.seckill.SeckillReconciler   : 秒杀对账发现不一致，voucherId=93846776024, type=C, subject=orderId=1793846781022025, action=REQUEUED, detail=已发送但无订单
+2026-11-05 10:46:53.956 [   scheduling-1] c.spiketrade.seckill.SeckillReconciler   : 秒杀对账发现不一致，voucherId=93846776024, type=C, subject=orderId=1793846781022026, action=MARKED_DEAD, detail=同用户已有其他订单
+2026-11-05 10:46:53.956 [   scheduling-1] c.spiketrade.seckill.SeckillReconciler   : 秒杀对账发现不一致，voucherId=93846776024, type=D, subject=orderId=1793846781022024, action=REPORT, detail=订单缺少 Redis 预约，userId=1012
+2026-11-05 10:47:53.968 [   scheduling-2] c.spiketrade.seckill.SeckillReconciler   : 秒杀对账发现不一致，voucherId=93846776024, type=C, subject=orderId=1793846781022025, action=REQUEUED, detail=已发送但无订单
+2026-11-05 10:47:53.968 [   scheduling-2] c.spiketrade.seckill.SeckillReconciler   : 秒杀对账发现不一致，voucherId=93846776024, type=D, subject=orderId=1793846781022024, action=REPORT, detail=订单缺少 Redis 预约，userId=1012

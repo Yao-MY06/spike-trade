@@ -1,7 +1,8 @@
-{"success":true,"data":656421227899912200}{"success":true,"data":656421232194879497}{"success":true,"data":656421232194879498}id	status
-656421227899912200	0
-656421232194879497	0
-656421232194879498	0
-recovery_elapsed_ms=22211
+{"success":true,"data":656616820710692039}{"success":true,"data":656616825005659336}{"success":true,"data":656616825005659337}id	status
+656616820710692039	0
+656616825005659336	0
+656616825005659337	0
+outage_total_ms=22076
+recovery_elapsed_ms=18987
 PASS: identity R+Z = D+O = 3
-PASS: broker outage recovered in 22211 ms
+PASS: broker outage recovered 18987 ms after restart

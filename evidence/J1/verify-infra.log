@@ -1,0 +1,11 @@
+tb_seckill_outbox	uk_outbox_user_voucher	user_id,voucher_id
+tb_voucher_order	uk_user_voucher	user_id,voucher_id
+Timeout: 60.0 seconds ...
+Listing queues for vhost / ...
+name	arguments
+seckillQueue	[]
+seckillDlq	[]
+seckillExchange	topic
+seckillDlx	direct
+startup_precondition_failed=0
+PASS: unique indexes present, DLX/DLQ declared, main queue arguments unchanged

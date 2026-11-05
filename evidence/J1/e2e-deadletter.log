@@ -1,2 +1,5 @@
+injected=2 dlq_count=2 main_queue=0
+listener_finished_on_first_attempt=2 listener_retried=0
 dead_letter_headers_ok=2
+PASS: identity R+Z = D+O = 1
 PASS: two non-retryable messages reached DLQ with exception headers

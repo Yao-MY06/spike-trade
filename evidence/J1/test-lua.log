@@ -1,4 +1,4 @@
-PASS: reservation writes zset score=1793802259
+PASS: reservation writes zset score=1793847008
 PASS: duplicate reservation rejected
 PASS: stock exhaustion rejected
 PASS: missing stock key returns 3
