@@ -6,17 +6,22 @@ import com.spiketrade.mapper.SeckillOutboxMapper;
 import com.spiketrade.mapper.SeckillReconcileMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(OutputCaptureExtension.class)
 class SeckillReconcilerTest {
 
     private final SeckillScripts scripts = mock(SeckillScripts.class);
@@ -104,6 +109,30 @@ class SeckillReconcilerTest {
         ReconcileReport report = reconciler.reconcile(1L);
 
         assertIssue(report, ReconcileReport.TYPE_E, ReconcileReport.ACTION_REPORT);
+    }
+
+    @Test
+    void scheduledRunLogsEveryIssue(CapturedOutput output) {
+        when(reconcileMapper.selectVoucherIds()).thenReturn(Collections.singletonList(1L));
+        when(scripts.snapshot(1L)).thenReturn("97:1");
+        stubCounters(100, 0);
+
+        reconciler.reconcileAll();
+
+        assertTrue(output.getOut().contains("voucherId=1"), output.getOut());
+        assertTrue(output.getOut().contains("type=E"), output.getOut());
+        assertTrue(output.getOut().contains("R+Z=98, D+O=100"), output.getOut());
+    }
+
+    @Test
+    void scheduledRunStaysQuietWhenConsistent(CapturedOutput output) {
+        when(reconcileMapper.selectVoucherIds()).thenReturn(Collections.singletonList(1L));
+        when(scripts.snapshot(1L)).thenReturn("100:0");
+        stubCounters(100, 0);
+
+        reconciler.reconcileAll();
+
+        assertFalse(output.getOut().contains("type="), output.getOut());
     }
 
     private void stubCounters(int stock, long orderCount) {

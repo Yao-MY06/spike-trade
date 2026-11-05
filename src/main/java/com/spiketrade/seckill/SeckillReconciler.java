@@ -42,10 +42,18 @@ public class SeckillReconciler {
     public void reconcileAll() {
         for (Long voucherId : reconcileMapper.selectVoucherIds()) {
             try {
-                reconcile(voucherId);
+                logIssues(reconcile(voucherId));
             } catch (Exception ex) {
                 log.error("秒杀对账失败，voucherId={}", voucherId, ex);
             }
+        }
+    }
+
+    private void logIssues(ReconcileReport report) {
+        for (ReconcileReport.Issue issue : report.getIssues()) {
+            log.warn("秒杀对账发现不一致，voucherId={}, type={}, subject={}, action={}, detail={}",
+                    report.getVoucherId(), issue.getType(), issue.getSubject(),
+                    issue.getAction(), issue.getDetail());
         }
     }
 
