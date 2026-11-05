@@ -25,8 +25,13 @@ for _ in 1 2 3 4; do
   sleep 1
 done
 
-assert_eq 1 "$(db_scalar "SELECT COUNT(*) FROM tb_voucher_order WHERE voucher_id=$VOUCHER_ID")" "duplicate order count"
-assert_eq 0 "$(db_scalar "SELECT stock FROM tb_seckill_voucher WHERE voucher_id=$VOUCHER_ID")" "database stock"
+ORDER_COUNT="$(db_scalar "SELECT COUNT(*) FROM tb_voucher_order WHERE voucher_id=$VOUCHER_ID")"
+DB_STOCK="$(db_scalar "SELECT stock FROM tb_seckill_voucher WHERE voucher_id=$VOUCHER_ID")"
+ATTEMPTS="$(db_scalar "SELECT attempts FROM tb_seckill_outbox WHERE id=$ORDER_ID")"
+echo "publish_attempts=$ATTEMPTS order_count=$ORDER_COUNT db_stock=$DB_STOCK"
+assert_eq 5 "$ATTEMPTS" "publish attempts"
+assert_eq 1 "$ORDER_COUNT" "duplicate order count"
+assert_eq 0 "$DB_STOCK" "database stock"
 assert_eq "0:1" "$(snapshot "$VOUCHER_ID")" "redis snapshot"
 assert_identity "$VOUCHER_ID"
 pass "same message published five times produced one order"

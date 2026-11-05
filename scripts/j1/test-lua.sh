@@ -14,7 +14,8 @@ pass() { echo "PASS: $*"; }
 [[ -f "$SNAPSHOT_LUA" ]] || fail "missing $SNAPSHOT_LUA"
 REDIS_CONTAINER="${REDIS_CONTAINER:-}"
 [[ -n "$REDIS_CONTAINER" ]] || fail "REDIS_CONTAINER is required"
-: "${REDISCLI_AUTH:?REDISCLI_AUTH is required}"
+export REDISCLI_AUTH="${REDISCLI_AUTH:-${TRADE_REDIS_PASSWORD:-}}"
+[[ -n "$REDISCLI_AUTH" ]] || fail "TRADE_REDIS_PASSWORD is required"
 
 redis_cmd() {
   docker exec -e REDISCLI_AUTH="$REDISCLI_AUTH" "$REDIS_CONTAINER" redis-cli --no-auth-warning "$@"

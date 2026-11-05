@@ -1,7 +1,0 @@
-Timeout: 60.0 seconds ...
-Listing queues for vhost / ...
-name	arguments
-seckillQueue	[]
-seckillDlq	[]
-seckillExchange	topic
-seckillDlx	direct

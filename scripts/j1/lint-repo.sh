@@ -3,6 +3,12 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 start_evidence lint-repo
 
+# 缺值时对应检查会被跳过，PASS 就没有意义，所以必须显式失败。
+for required in MQ_CONTAINER MQ_USERNAME TRADE_DB_PASSWORD TRADE_REDIS_PASSWORD TRADE_MQ_PASSWORD \
+    TRADE_JWT_ADMIN_SECRET TRADE_JWT_USER_SECRET; do
+  [[ -n "${!required:-}" ]] || fail "$required is required for a meaningful lint"
+done
+
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"; finish_evidence' EXIT
 FILES=()

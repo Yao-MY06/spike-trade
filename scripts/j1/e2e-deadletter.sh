@@ -23,6 +23,8 @@ mysql_exec "
     ($UNIQUE_ORDER_ID,$EXISTING_USER,$VOUCHER_ID,'{\"id\":$UNIQUE_ORDER_ID,\"userId\":$EXISTING_USER,\"voucherId\":$VOUCHER_ID}',0,0,0,NOW(3));
 "
 mqctl purge_queue seckillDlq >/dev/null
+[[ -f "${APP_LOG:-}" ]] || fail "APP_LOG must point to the running app's log (with org.springframework.retry at DEBUG)"
+APP_LOG_START="$(wc -l < "$APP_LOG")"
 
 for order_id in "$STOCK_ORDER_ID" "$UNIQUE_ORDER_ID"; do
   wait_outbox_sent "$order_id" 60
@@ -33,8 +35,18 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 DLQ_COUNT="$(queue_messages seckillDlq)"
+MAIN_QUEUE_COUNT="$(queue_messages seckillQueue)"
+echo "injected=2 dlq_count=$DLQ_COUNT main_queue=$MAIN_QUEUE_COUNT"
 assert_eq 2 "$DLQ_COUNT" "DLQ message count"
-assert_eq 0 "$(queue_messages seckillQueue)" "main queue messages"
+assert_eq 0 "$MAIN_QUEUE_COUNT" "main queue messages"
+
+# 重试分类以真实监听器的 RetryTemplate 日志为准：不可重试消息每条只应执行一次。
+RETRY_LOG="$(tail -n +"$((APP_LOG_START + 1))" "$APP_LOG")"
+FINISHED_FIRST="$(printf '%s\n' "$RETRY_LOG" | grep -a -c 'Retry failed last attempt: count=1' || true)"
+RETRIED="$(printf '%s\n' "$RETRY_LOG" | grep -a -c 'Retry: count=1' || true)"
+echo "listener_finished_on_first_attempt=$FINISHED_FIRST listener_retried=$RETRIED"
+assert_eq 2 "$FINISHED_FIRST" "messages finished on first attempt"
+assert_eq 0 "$RETRIED" "listener retries"
 
 DLQ_JSON_FILE="$(mktemp)"
 trap 'rm -f "$DLQ_JSON_FILE"; cleanup_voucher; finish_evidence' EXIT
@@ -50,4 +62,5 @@ for item in messages[:2]:
     assert headers.get("x-original-exchange") == "seckillExchange", headers
 print("dead_letter_headers_ok=2")
 ' "$DLQ_JSON_FILE"
+assert_identity "$VOUCHER_ID"
 pass "two non-retryable messages reached DLQ with exception headers"
