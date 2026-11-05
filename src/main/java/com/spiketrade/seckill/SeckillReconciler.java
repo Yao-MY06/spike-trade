@@ -10,8 +10,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -103,7 +103,7 @@ public class SeckillReconciler {
                                Set<Long> orderUsers,
                                Map<Long, SeckillOutbox> outboxByUser,
                                LocalDateTime cutoff) {
-        long cutoffSeconds = cutoff.toEpochSecond(ZoneOffset.UTC);
+        long cutoffSeconds = Instant.now().minusSeconds(graceSeconds).getEpochSecond();
         for (Map.Entry<Long, Long> entry : reservationTimes.entrySet()) {
             Long userId = entry.getKey();
             Long reservedAt = entry.getValue();

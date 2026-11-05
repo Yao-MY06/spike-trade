@@ -26,4 +26,17 @@ public class OutboxService {
                 .setResendCount(0);
         outboxMapper.insert(outbox);
     }
+
+    /**
+     * 用于提交结果不确定时回查：只有业务键匹配才算本次 outbox 已落库。
+     */
+    public boolean matches(Long id, Long userId, Long voucherId) {
+        if (id == null || userId == null || voucherId == null) {
+            return false;
+        }
+        SeckillOutbox outbox = outboxMapper.selectById(id);
+        return outbox != null
+                && userId.equals(outbox.getUserId())
+                && voucherId.equals(outbox.getVoucherId());
+    }
 }

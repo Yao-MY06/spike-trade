@@ -68,8 +68,21 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             outboxService.insertNew(orderId, userId, voucherId, JSON.toJSONString(message));
             return Result.ok(orderId);
         } catch (Exception ex) {
-            log.error("秒杀预约写入 outbox 失败，回滚预约，voucherId={}, userId={}, orderId={}",
+            log.error("秒杀预约写入 outbox 异常，voucherId={}, userId={}, orderId={}",
                     voucherId, userId, orderId, ex);
+            boolean outboxConfirmed;
+            try {
+                outboxConfirmed = orderId != null && outboxService.matches(orderId, userId, voucherId);
+            } catch (Exception checkError) {
+                log.error("outbox 写入结果不确定且回查失败，保留 Redis 预约等待对账，voucherId={}, userId={}, orderId={}",
+                        voucherId, userId, orderId, checkError);
+                return Result.fail("系统繁忙，请稍后重试");
+            }
+            if (outboxConfirmed) {
+                log.warn("outbox 写入异常但已确认落库，按成功返回，voucherId={}, userId={}, orderId={}",
+                        voucherId, userId, orderId);
+                return Result.ok(orderId);
+            }
             try {
                 seckillScripts.unreserve(voucherId, userId);
             } catch (Exception rollbackError) {

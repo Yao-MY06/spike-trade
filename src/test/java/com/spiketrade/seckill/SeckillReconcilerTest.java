@@ -7,6 +7,7 @@ import com.spiketrade.mapper.SeckillReconcileMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
 
@@ -34,7 +35,7 @@ class SeckillReconcilerTest {
     void identifiesAndRepairsOrphanReservation() {
         when(scripts.snapshot(1L)).thenReturn("99:1");
         when(scripts.reservations(1L)).thenReturn(Collections.singletonList(
-                new Reservation(7L, LocalDateTime.now().minusMinutes(2).toEpochSecond(java.time.ZoneOffset.UTC))));
+                new Reservation(7L, Instant.now().minusSeconds(120).getEpochSecond())));
         when(scripts.unreserve(1L, 7L)).thenReturn(1L);
         stubCounters(100, 0);
 
@@ -42,6 +43,19 @@ class SeckillReconcilerTest {
 
         assertIssue(report, ReconcileReport.TYPE_A, ReconcileReport.ACTION_REPAIRED);
         verify(scripts).unreserve(1L, 7L);
+    }
+
+    @Test
+    void recentReservationIsNotRepaired() {
+        when(scripts.snapshot(1L)).thenReturn("99:1");
+        when(scripts.reservations(1L)).thenReturn(Collections.singletonList(
+                new Reservation(7L, Instant.now().getEpochSecond())));
+        stubCounters(100, 0);
+
+        ReconcileReport report = reconciler.reconcile(1L);
+
+        assertTrue(report.isConsistent());
+        verify(scripts, never()).unreserve(anyLong(), anyLong());
     }
 
     @Test

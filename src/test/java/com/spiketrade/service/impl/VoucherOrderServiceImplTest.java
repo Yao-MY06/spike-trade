@@ -67,6 +67,37 @@ class VoucherOrderServiceImplTest {
         verify(scripts).unreserve(1L, 7L);
     }
 
+    @Test
+    void outboxCommitUncertainButStoredReturnsSuccess() {
+        loginAs(7L);
+        when(scripts.tryReserve(eq(1L), eq(7L), anyLong())).thenReturn(0L);
+        when(idWorker.nextId("order")).thenReturn(100L);
+        doThrow(new RuntimeException("commit response lost")).when(outboxService)
+                .insertNew(eq(100L), eq(7L), eq(1L), any(String.class));
+        when(outboxService.matches(100L, 7L, 1L)).thenReturn(true);
+
+        Result result = service.seckillVoucher(1L);
+
+        assertTrue(result.getSuccess());
+        assertEquals(100L, result.getData());
+        verify(scripts, never()).unreserve(anyLong(), anyLong());
+    }
+
+    @Test
+    void outboxCheckFailureKeepsReservationForReconciliation() {
+        loginAs(7L);
+        when(scripts.tryReserve(eq(1L), eq(7L), anyLong())).thenReturn(0L);
+        when(idWorker.nextId("order")).thenReturn(100L);
+        doThrow(new RuntimeException("db down")).when(outboxService)
+                .insertNew(eq(100L), eq(7L), eq(1L), any(String.class));
+        when(outboxService.matches(100L, 7L, 1L)).thenThrow(new RuntimeException("db still down"));
+
+        Result result = service.seckillVoucher(1L);
+
+        assertFalse(result.getSuccess());
+        verify(scripts, never()).unreserve(anyLong(), anyLong());
+    }
+
     private void loginAs(Long userId) {
         UserDTO user = new UserDTO();
         user.setId(userId);
